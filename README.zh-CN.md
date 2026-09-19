@@ -98,12 +98,6 @@ cd ~/.dsh && dsh plugin --profile web add /绝对路径/loci-dsh
 
 结构参照 [dsh-better-sidebar 外部插件指南](https://github.com/omdsh-dev/DSH-better-sidebar/blob/main/docs/external-plugin-guide.md) 与 [dsh-sentinel](https://github.com/fuhefei/dsh-sentinel) 的独立构建。
 
-## 已知限制
-
-- 记忆时间流只能关键词驱动（loci 尚无列表端点）；全文时间线、wiki 页面浏览需要 loci
-  侧新增端点，需求已写入 [docs/upstream-requirements.md](docs/upstream-requirements.md)
-- 空 query 在插件端拦截；保留作为 loci ≤ 0.5.x 的兜底（该版本会击穿 handler，v0.6.2 已修）
-
 ## 相关项目
 
 - [loci](https://github.com/IvenKooLab/loci) — 本地优先的第二大脑 CLI（`pip install loci-rag`）

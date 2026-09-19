@@ -102,11 +102,6 @@ cd ~/.dsh && dsh plugin --profile web add /absolute/path/to/loci-dsh
 
 Structured after the [dsh-better-sidebar external-plugin guide](https://github.com/omdsh-dev/DSH-better-sidebar/blob/main/docs/external-plugin-guide.md) and [dsh-sentinel](https://github.com/fuhefei/dsh-sentinel)'s standalone build.
 
-## Known limitations
-
-- Memory timeline is keyword-driven only (loci has no list endpoint yet); full timeline and wiki browsing need new loci endpoints — see [docs/upstream-requirements.md](docs/upstream-requirements.md)
-- Empty queries are rejected client-side; kept as a fallback for loci ≤ 0.5.x where they crashed the handler (fixed upstream in v0.6.2)
-
 ## Related
 
 - [loci](https://github.com/IvenKooLab/loci) — local-first second brain CLI (`pip install loci-rag`)
