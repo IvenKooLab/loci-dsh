@@ -17,10 +17,7 @@
 
 不内嵌 Python、不 fork loci 核心。插件 **host 半**（Node）在 dsh web 服务器上挂载 `/loci-dsh/api/*` 路由，代理转发到本机 [`loci serve-http`](https://github.com/IvenKooLab/loci)（REST + Bearer auth）；**client 半**（React）通过 [dsh-better-sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) 注册侧栏标签页，同源调用 host 半——loci 不需要开 CORS。
 
-```
-dsh Web UI (浏览器) ──同源──▶ loci-dsh host 半 (dsh 进程内, Node)
-                                  ──HTTP + Bearer──▶ loci serve-http (127.0.0.1:8765)
-```
+![loci-dsh 架构](docs/screenshots/architecture.svg)
 
 - **搜索**：混合检索，支持条数、只看记忆（`tag=memory`）、路径过滤
 - **问答**：LLM 基于知识库作答，答案带引用来源芯片，可逐条核查

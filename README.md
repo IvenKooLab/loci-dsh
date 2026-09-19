@@ -21,10 +21,7 @@
 
 Pure UI layer — no Python embedded, no core fork. The plugin's **host half** (Node) mounts `/loci-dsh/api/*` routes on the dsh web server and proxies them to a local [`loci serve-http`](https://github.com/IvenKooLab/loci) instance (REST + Bearer auth). The **client half** (React) registers the sidebar tab via [dsh-better-sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) and talks to the host half same-origin — so loci never needs CORS.
 
-```
-dsh Web UI (browser) ──same-origin──▶ loci-dsh host half (in dsh process, Node)
-                                          ──HTTP + Bearer──▶ loci serve-http (127.0.0.1:8765)
-```
+![loci-dsh architecture](docs/screenshots/architecture.svg)
 
 - **Search** — hybrid retrieval with result count, memories-only (`tag=memory`) and path filters
 - **Ask** — LLM answers from your knowledge base with citation chips, optional claim-by-claim verification
