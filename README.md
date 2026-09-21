@@ -8,6 +8,7 @@
 [![CI](https://github.com/IvenKooLab/loci-dsh/actions/workflows/build.yml/badge.svg)](https://github.com/IvenKooLab/loci-dsh/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%E2%89%A524-green.svg)](https://nodejs.org)
+[![Featured in awesome-deepseek-harness](https://img.shields.io/badge/featured_in-awesome--deepseek--harness-8A2BE2?logo=githubsponsors&logoColor=white)](https://github.com/0xsline/awesome-deepseek-harness)
 
 **loci-dsh** is a UI-layer plugin for [dsh](https://github.com/deepseek-ai/deepseek-harness) ("everything is a plugin"): it mounts a **🧠 loci memory** tab in the web sidebar where you can search, ask questions, jot down memories, and inspect your [loci](https://github.com/IvenKooLab/loci) knowledge base — without leaving the conversation.
 

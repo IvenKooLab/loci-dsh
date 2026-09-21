@@ -5,6 +5,8 @@
 >
 > English documentation: [README.md](README.md)
 
+[![Featured in awesome-deepseek-harness](https://img.shields.io/badge/featured_in-awesome--deepseek--harness-8A2BE2?logo=githubsponsors&logoColor=white)](https://github.com/0xsline/awesome-deepseek-harness)
+
 **loci-dsh** 是 [dsh](https://github.com/deepseek-ai/deepseek-harness)（"一切皆插件"）的纯 UI 层插件：在 Web 侧边栏挂一个 **🧠 loci 记忆库** 标签页，让你在对话之余直接搜索、提问、速记、查看 [loci](https://github.com/IvenKooLab/loci) 知识库。
 
 | 搜索 | 问答 |
