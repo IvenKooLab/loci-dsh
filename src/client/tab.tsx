@@ -25,6 +25,27 @@ export interface ParsedStats {
   empty: boolean
 }
 
+export interface GraphEdge {
+  s: string
+  p: string
+  o: string
+  source: string
+  ts?: number
+}
+
+export interface GraphEntity {
+  name: string
+  degree: number
+  sources: string[]
+}
+
+export interface GraphData {
+  version: number
+  entities: GraphEntity[]
+  edges: GraphEdge[]
+  files: number
+}
+
 interface ApiOk { ok: true }
 type ApiEnvelope<T> = (ApiOk & T) | { ok: false; error: { code: string; message: string } }
 
@@ -68,7 +89,7 @@ const K_OPTIONS = [5, 10, 20, 50]
 
 export function LociTab(props: { readonly visible: boolean }): ReactNode {
   const t = currentLocale()
-  const [view, setView] = useState<'search' | 'ask' | 'memory' | 'status'>('search')
+  const [view, setView] = useState<'search' | 'ask' | 'memory' | 'graph' | 'status'>('search')
   const [ping, setPing] = useState<'checking' | 'up' | 'down' | 'no-token'>('checking')
   const [summary, setSummary] = useState<string>('')
 
@@ -103,7 +124,7 @@ export function LociTab(props: { readonly visible: boolean }): ReactNode {
         <button type="button" className={styles.headerButton} onClick={() => void refreshStatus()} title={t['status.refresh']}>⟳</button>
       </div>
       <div className={styles.tabs} role="tablist">
-        {(['search', 'ask', 'memory', 'status'] as const).map(key => (
+        {(['search', 'ask', 'memory', 'graph', 'status'] as const).map(key => (
           <button
             key={key}
             type="button"
@@ -120,6 +141,7 @@ export function LociTab(props: { readonly visible: boolean }): ReactNode {
         {view === 'search' && <SearchView />}
         {view === 'ask' && <AskView />}
         {view === 'memory' && <MemoryView onSaved={() => void refreshStatus()} />}
+        {view === 'graph' && <GraphView />}
         {view === 'status' && <StatusView />}
       </div>
     </div>
@@ -385,6 +407,78 @@ function MemoryView(props: { readonly onSaved: () => void }): ReactNode {
         {saveState === 'saved' && (
           <span className={styles.saved} title={savedPath}>✓ {t['memory.saved']}</span>
         )}
+      </div>
+    </div>
+  )
+}
+
+function GraphView(): ReactNode {
+  const t = currentLocale()
+  const [graph, setGraph] = useState<GraphData | null | undefined>(undefined)
+  const [filter, setFilter] = useState('')
+  const [selected, setSelected] = useState<string | null>(null)
+
+  useEffect(() => {
+    void (async () => {
+      const result = await callApi<{ available: boolean; graph: GraphData | null }>('graph')
+      setGraph(result.ok && result.available ? result.graph : null)
+    })()
+  }, [])
+
+  if (graph === undefined) return <div className={styles.view}><div className={styles.meta}>{t['conn.checking']}</div></div>
+  if (graph === null) {
+    return (
+      <div className={styles.view}>
+        <div className={styles.meta}>{t['graph.unavailable']}</div>
+        <div className={styles.hint}>{t['graph.unavailableHint']}</div>
+      </div>
+    )
+  }
+  const needle = filter.trim().toLowerCase()
+  const shownEntities = needle === '' ? graph.entities : graph.entities.filter(entity => entity.name.toLowerCase().includes(needle))
+  const shownEdges = selected !== null ? graph.edges.filter(edge => edge.s === selected || edge.o === selected) : graph.edges
+  return (
+    <div className={styles.view}>
+      <div className={styles.hint}>{t['graph.hint']}</div>
+      <div className={styles.meta}>{format(t['graph.stats'], { e: graph.entities.length, r: graph.edges.length, f: graph.files })}</div>
+      {selected !== null && (
+        <div className={styles.formRow}>
+          <span className={styles.graphSelected}>{format(t['graph.related'], { name: selected })}</span>
+          <button type="button" className={styles.linkButton} onClick={() => setSelected(null)}>{t['graph.clearFilter']}</button>
+        </div>
+      )}
+      <div className={styles.formRow}>
+        <input
+          className={styles.input}
+          value={filter}
+          placeholder={t['graph.filter']}
+          onChange={event => setFilter(event.target.value)}
+        />
+      </div>
+      <div className={styles.sectionTitle}>{t['graph.entities']}</div>
+      <div className={styles.graphChips}>
+        {shownEntities.map(entity => (
+          <button
+            key={entity.name}
+            type="button"
+            title={format(t['graph.hub'], { n: entity.degree })}
+            className={`${styles.graphChip} ${selected === entity.name ? styles.graphChipActive : ''}`}
+            onClick={() => setSelected(selected === entity.name ? null : entity.name)}
+          >
+            {entity.name}
+            <span className={styles.graphChipDegree}>{entity.degree}</span>
+          </button>
+        ))}
+      </div>
+      <div className={styles.sectionTitle}>{t['graph.relations']}</div>
+      <div className={styles.hitList}>
+        {shownEdges.map((edge, i) => (
+          <div key={`${edge.s}-${edge.p}-${edge.o}-${i}`} className={styles.graphEdge}>
+            <button type="button" className={styles.graphTerm} onClick={() => setSelected(edge.s)}>{edge.s}</button>
+            <span className={styles.graphPredicate} title={t['graph.predicate']}>{edge.p}</span>
+            <button type="button" className={styles.graphTerm} onClick={() => setSelected(edge.o)}>{edge.o}</button>
+          </div>
+        ))}
       </div>
     </div>
   )

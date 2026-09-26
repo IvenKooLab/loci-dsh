@@ -27,6 +27,7 @@ Pure UI layer — no Python embedded, no core fork. The plugin's **host half** (
 - **Search** — hybrid retrieval with result count, memories-only (`tag=memory`) and path filters
 - **Ask** — LLM answers from your knowledge base with citation chips, optional claim-by-claim verification
 - **Memories** — keyword-driven memory retrieval grouped by day, plus quick capture (title / text / tags)
+- **Graph** — browse loci's knowledge graph (loci ≥ 0.6.0 `loci graph build`): entity chips with degree badges, SPO relation rows, click an entity to filter its relations
 - **Status** — connection state, store summary, per-source chunk counts
 
 loci's HTTP API answers in plain-text envelopes, so the host half re-derives structure (search blocks, stats, citations, memory timestamps from filenames). Parsers live in [`src/parse.ts`](src/parse.ts) and track loci's de-facto wire format.
@@ -80,6 +81,7 @@ Launch `dsh web` — the 🧠 **loci memory** tab appears in the bottom workbenc
 | `token` | *(empty)* | Bearer token, matching loci's `[http] token` |
 | `timeoutMs` | `20000` | Short-request timeout (health/stats/search/remember) |
 | `askTimeoutMs` | `180000` | `/ask` timeout — a full LLM round-trip (~21 s with glm-4.6) |
+| `graphPath` | *(disabled)* | Absolute path to loci's `graph.json` (default `<store>/graph.json`) — enables the Graph view |
 
 ## Development
 
@@ -105,6 +107,8 @@ Structured after the [dsh-better-sidebar external-plugin guide](https://github.c
 - [loci](https://github.com/IvenKooLab/loci) — local-first second brain CLI (`pip install loci-rag`)
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) — the harness this plugin extends
 - [dsh-better-sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) — the sidebar foundation hosting the tab
+
+If loci-dsh saves you time, a ⭐ on the repo helps others find it.
 
 ## License
 

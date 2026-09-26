@@ -389,6 +389,75 @@
   animation: lociPulse 1.2s ease-in-out infinite;
 }
 
+.graphChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.graphChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  font-size: 11px;
+  border: 1px solid var(--dsh-border-2, #333);
+  border-radius: 10px;
+  background: var(--dsh-bg-2, #232323);
+  color: var(--dsh-fg-1, #e6e6e6);
+  cursor: pointer;
+}
+
+.graphChip:hover {
+  border-color: var(--dsh-accent, #7aa2f7);
+}
+
+.graphChipActive {
+  border-color: var(--dsh-accent, #7aa2f7);
+  background: rgba(122, 162, 247, 0.15);
+}
+
+.graphChipDegree {
+  font-size: 9px;
+  color: var(--dsh-fg-3, #7a7a7a);
+}
+
+.graphEdge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 8px;
+  background: var(--dsh-bg-2, #232323);
+  border: 1px solid var(--dsh-border-2, #2e2e2e);
+  border-radius: 6px;
+}
+
+.graphTerm {
+  border: none;
+  background: transparent;
+  color: var(--dsh-accent, #7aa2f7);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.graphPredicate {
+  font-family: Consolas, ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--dsh-fg-3, #8a8a8a);
+}
+
+.graphSelected {
+  font-size: 11px;
+  color: var(--dsh-fg-2, #b5b5b5);
+}
+
 @keyframes lociPulse {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }

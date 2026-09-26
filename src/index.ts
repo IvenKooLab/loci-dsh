@@ -13,6 +13,7 @@
  * request passes the same Host-header loopback fence the dsh /api gateway
  * uses (DNS-rebinding defense, not authentication).
  */
+import { loadGraph } from './graph.ts'
 import { LociClient, LociError } from './loci-client.ts'
 import { parseAskAnswer, parseSearchText, parseStatsText } from './parse.ts'
 import { isTrustedApiRequest } from './trust-fence.ts'
@@ -34,6 +35,11 @@ export interface Config {
   timeoutMs: number
   /** Timeout for /ask — it runs a full LLM round-trip, tens of seconds. */
   askTimeoutMs: number
+  /** Absolute path to loci's knowledge-graph file (loci ≥ 0.6.0 `loci graph build`
+   * output, default `<store>/graph.json`). Read directly from disk: the browser
+   * is same-origin with this host process anyway, and graph.json is a
+   * human-readable artifact by design. Empty disables the graph view. */
+  graphPath: string
 }
 
 export const DEFAULT_CONFIG: Config = {
@@ -41,6 +47,7 @@ export const DEFAULT_CONFIG: Config = {
   token: '',
   timeoutMs: 20_000,
   askTimeoutMs: 180_000,
+  graphPath: '',
 }
 
 export function resolveConfig(config?: Partial<Config>): Config {
@@ -49,6 +56,7 @@ export function resolveConfig(config?: Partial<Config>): Config {
     token: config?.token ?? process.env.LOCI_TOKEN ?? DEFAULT_CONFIG.token,
     timeoutMs: config?.timeoutMs ?? DEFAULT_CONFIG.timeoutMs,
     askTimeoutMs: config?.askTimeoutMs ?? DEFAULT_CONFIG.askTimeoutMs,
+    graphPath: config?.graphPath ?? process.env.LOCI_GRAPH_PATH ?? DEFAULT_CONFIG.graphPath,
   }
 }
 
@@ -144,7 +152,7 @@ export function apply(ctx: ContextLike, config?: Partial<Config>): void {
       path: API_PREFIX,
       handler: async (req, res) => {
         try {
-          await handleApiRequest(client, trustedHosts(), req, res)
+          await handleApiRequest(resolved, client, trustedHosts(), req, res)
         } catch (error) {
           // The webServer's wrapper turns unhandled handler errors into an
           // empty 400; surface the real cause through the plugin logger
@@ -158,6 +166,7 @@ export function apply(ctx: ContextLike, config?: Partial<Config>): void {
 }
 
 async function handleApiRequest(
+  resolved: Config,
   client: LociClient,
   trustedHosts: readonly string[],
   req: NodeIncomingMessage,
@@ -179,7 +188,7 @@ async function handleApiRequest(
   }
   try {
     const payload = await readJsonBody(req) as Record<string, unknown>
-    const data = await dispatch(client, method, payload)
+    const data = await dispatch(resolved, client, method, payload)
     writeJson(res, 200, { ok: true, ...data })
   } catch (error) {
     if (error instanceof BadRequestError) {
@@ -192,7 +201,7 @@ async function handleApiRequest(
   }
 }
 
-async function dispatch(client: LociClient, method: string, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+async function dispatch(resolved: Config, client: LociClient, method: string, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
   if (method === 'ping') {
     const health = await client.health()
     return { configured: client.configured, baseUrl: client.baseUrl, tokenSet: client.tokenSet, health }
@@ -227,6 +236,10 @@ async function dispatch(client: LociClient, method: string, payload: Record<stri
     const tags = Array.isArray(payload.tags) ? payload.tags.filter((tag): tag is string => typeof tag === 'string') : undefined
     const result = await client.remember({ text, title, tags })
     return { result }
+  }
+  if (method === 'graph') {
+    const graph = await loadGraph(resolved.graphPath)
+    return { available: graph !== null, graph }
   }
   throw new BadRequestError(`unknown loci-dsh API method "${method}"`)
 }

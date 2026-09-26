@@ -24,6 +24,7 @@
 - **搜索**：混合检索，支持条数、只看记忆（`tag=memory`）、路径过滤
 - **问答**：LLM 基于知识库作答，答案带引用来源芯片，可逐条核查
 - **记忆**：关键词检索记忆（按日期分组）+ 快速速记（标题 / 正文 / 标签）
+- **图谱**：浏览 loci 知识图谱（loci ≥ 0.6.0 `loci graph build`）：实体芯片带度数角标、SPO 关系行，点选实体即过滤其关系
 - **状态**：连接状态、索引库概况、逐来源 chunk 数
 
 loci 的 HTTP API 返回纯文本信封，host 半负责还原结构（搜索块、统计、引用、来自文件名的记忆时间戳），解析器在 [`src/parse.ts`](src/parse.ts)，跟随 loci 的事实线格式。
@@ -77,6 +78,7 @@ dsh plugin --profile web add github:IvenKooLab/loci-dsh
 | `token` | （空） | Bearer token，与 loci `[http] token` 一致 |
 | `timeoutMs` | `20000` | 短请求超时（health/stats/search/remember） |
 | `askTimeoutMs` | `180000` | `/ask` 超时（LLM 往返，glm-4.6 实测约 21 秒） |
+| `graphPath` | （关闭） | loci `graph.json` 的绝对路径（默认 `<store>/graph.json`）——填上即开启图谱视图 |
 
 ## 开发
 
@@ -102,6 +104,8 @@ cd ~/.dsh && dsh plugin --profile web add /绝对路径/loci-dsh
 - [loci](https://github.com/IvenKooLab/loci) — 本地优先的第二大脑 CLI（`pip install loci-rag`）
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) — 本插件扩展的 agent 框架
 - [dsh-better-sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) — 承载标签页的侧栏底座
+
+如果 loci-dsh 帮到了你，给仓库点个 ⭐ 让更多人看到。
 
 ## License
 
