@@ -12,6 +12,8 @@
 
 **loci-dsh** is a UI-layer plugin for [dsh](https://github.com/deepseek-ai/deepseek-harness) ("everything is a plugin"): it mounts a **🧠 loci memory** tab in the web sidebar where you can search, ask questions, jot down memories, and inspect your [loci](https://github.com/IvenKooLab/loci) knowledge base — without leaving the conversation.
 
+![Live search demo](docs/screenshots/demo.gif)
+
 | Search | Ask |
 |---|---|
 | ![search](docs/screenshots/search.png) | ![ask](docs/screenshots/ask.png) |
