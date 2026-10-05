@@ -12,8 +12,10 @@
 | 搜索 | 问答 |
 |---|---|
 | ![search](docs/screenshots/search.png) | ![ask](docs/screenshots/ask.png) |
-| **记忆** | **状态** |
-| ![memories](docs/screenshots/memories.png) | ![status](docs/screenshots/status.png) |
+| **记忆** | **图谱** |
+| ![memories](docs/screenshots/memories.png) | ![graph](docs/screenshots/graph.png) |
+
+状态视图：![status](docs/screenshots/status.png)
 
 ## 架构
 

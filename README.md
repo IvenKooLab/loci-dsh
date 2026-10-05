@@ -15,8 +15,10 @@
 | Search | Ask |
 |---|---|
 | ![search](docs/screenshots/search.png) | ![ask](docs/screenshots/ask.png) |
-| **Memories** | **Status** |
-| ![memories](docs/screenshots/memories.png) | ![status](docs/screenshots/status.png) |
+| **Memories** | **Graph** |
+| ![memories](docs/screenshots/memories.png) | ![graph](docs/screenshots/graph.png) |
+
+Status view: ![status](docs/screenshots/status.png)
 
 ## How it works
 
