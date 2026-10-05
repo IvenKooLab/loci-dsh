@@ -484,6 +484,10 @@ function GraphView(): ReactNode {
   )
 }
 
+/** Client-side copy of the package version (keep in sync on release). */
+const APP_VERSION = '0.2.1'
+const REPO_URL = 'https://github.com/IvenKooLab/loci-dsh'
+
 function StatusView(): ReactNode {
   const t = currentLocale()
   const [state, setState] = useState<{ ping: { baseUrl: string; tokenSet: boolean; health: string }; stats: ParsedStats } | null>(null)
@@ -526,6 +530,10 @@ function StatusView(): ReactNode {
               <span className={styles.sourceChunks}>{source.chunks}</span>
             </div>
           ))}
+      <div className={styles.footer}>
+        <span className={styles.footerVersion}>loci-dsh v{APP_VERSION}</span>
+        <a className={styles.footerStar} href={REPO_URL} target="_blank" rel="noreferrer">{t['status.star']}</a>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 {
   "name": "loci-dsh",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "MIT",
   "description": "loci second-brain plugin for DeepSeek Harness (dsh): search / ask / remember your local knowledge base from the web sidebar",
   "type": "module",
