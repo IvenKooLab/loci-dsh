@@ -46,6 +46,15 @@ export interface GraphData {
   files: number
 }
 
+export interface MemoryEntry {
+  path: string
+  title: string
+  created: string
+  ts: number
+  tags: string[]
+  text: string
+}
+
 interface ApiOk { ok: true }
 type ApiEnvelope<T> = (ApiOk & T) | { ok: false; error: { code: string; message: string } }
 
@@ -299,6 +308,69 @@ function AskView(): ReactNode {
   )
 }
 
+function MemoryCard({ entry }: { readonly entry: MemoryEntry }): ReactNode {
+  const t = currentLocale()
+  const [expanded, setExpanded] = useState(false)
+  const long = entry.text.length > 240
+  return (
+    <div className={styles.memoryCard}>
+      <div className={styles.memoryHead}>
+        <span className={styles.memoryTitle}>{entry.title}</span>
+        <span className={styles.memoryTime}>{entry.created}</span>
+      </div>
+      {entry.tags.length > 0 && (
+        <div className={styles.memoryTags}>
+          {entry.tags.map(tag => <span key={tag} className={styles.memoryTag}>{tag}</span>)}
+        </div>
+      )}
+      <pre className={styles.hitText}>{expanded || !long ? entry.text : `${entry.text.slice(0, 240)}…`}</pre>
+      {long && (
+        <button type="button" className={styles.linkButton} onClick={() => setExpanded(!expanded)}>
+          {expanded ? t['memory.fold'] : t['memory.expand']}
+        </button>
+      )}
+    </div>
+  )
+}
+
+function MemoryTimeline(props: { readonly refreshKey: number }): ReactNode {
+  const t = currentLocale()
+  const [entries, setEntries] = useState<MemoryEntry[] | null | undefined>(undefined)
+
+  useEffect(() => {
+    void (async () => {
+      const result = await callApi<{ available: boolean; memories: MemoryEntry[] | null }>('memories')
+      setEntries(result.ok && result.available ? result.memories : null)
+    })()
+  }, [props.refreshKey])
+
+  if (entries === undefined) return null
+  if (entries === null) return <div className={styles.hint}>{t['memory.timelineUnavailable']}</div>
+  const grouped: Array<[string, MemoryEntry[]]> = []
+  {
+    const byDay = new Map<string, MemoryEntry[]>()
+    for (const entry of entries) {
+      const day = entry.created.slice(0, 10) || '—'
+      const bucket = byDay.get(day)
+      if (bucket === undefined) byDay.set(day, [entry])
+      else bucket.push(entry)
+    }
+    grouped.push(...byDay.entries())
+  }
+  return (
+    <>
+      <div className={styles.sectionTitle}>🗂 {format(t['memory.timeline'], { n: entries.length })}</div>
+      {entries.length === 0 && <div className={styles.meta}>{t['memory.empty']}</div>}
+      {grouped.map(([day, dayEntries]) => (
+        <div key={day} className={styles.dayGroup}>
+          <div className={styles.dayLabel}>{day}</div>
+          {dayEntries.map(entry => <MemoryCard key={entry.path} entry={entry} />)}
+        </div>
+      ))}
+    </>
+  )
+}
+
 function MemoryView(props: { readonly onSaved: () => void }): ReactNode {
   const t = currentLocale()
   const [query, setQuery] = useState('')
@@ -309,6 +381,7 @@ function MemoryView(props: { readonly onSaved: () => void }): ReactNode {
   const [tags, setTags] = useState('')
   const [saveState, setSaveState] = useState<'idle' | 'busy' | 'saved'>('idle')
   const [savedPath, setSavedPath] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
   const err = useApiError()
 
   const run = useCallback(async () => {
@@ -339,6 +412,7 @@ function MemoryView(props: { readonly onSaved: () => void }): ReactNode {
       setText('')
       setTitle('')
       setTags('')
+      setRefreshKey(key => key + 1)
       props.onSaved()
     } else {
       setSaveState('idle')
@@ -360,6 +434,8 @@ function MemoryView(props: { readonly onSaved: () => void }): ReactNode {
 
   return (
     <div className={styles.view}>
+      <MemoryTimeline refreshKey={refreshKey} />
+
       <div className={styles.sectionTitle}>🔍 {t['view.memory']}</div>
       <div className={styles.formRow}>
         <input
@@ -485,7 +561,7 @@ function GraphView(): ReactNode {
 }
 
 /** Client-side copy of the package version (keep in sync on release). */
-const APP_VERSION = '0.2.1'
+const APP_VERSION = '0.3.0'
 const REPO_URL = 'https://github.com/IvenKooLab/loci-dsh'
 
 function StatusView(): ReactNode {

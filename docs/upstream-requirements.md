@@ -7,7 +7,11 @@
 > **状态（2026-09-19）**：P0 两项已在 **loci v0.6.2** 修复（serve-http/sync/bench 子命令
 > 注册 + HTTP 加固：handler 异常回 500、坏 JSON 回 400、空查询短路返回提示；
 > `--host/--port` 默认值读 `[http]` 段）。loci-dsh 侧要求 loci ≥ v0.6.2。
-> P1/P2 仍开放：GET /memories、结构化 search hits、GET /wiki。
+>
+> **状态更新（2026-09-26）**：P1 的 **GET /memories 已被插件侧绕开**——loci-dsh v0.3.0
+> 的记忆时间流直读 `memories/` 目录（文件名即排序键，frontmatter 即元数据），
+> `memoriesPath` 配置开启。HTTP 端点对本插件降为可选（仅远程部署场景仍有价值）。
+> 仍开放：结构化 search hits、GET /wiki。wiki 浏览同样存在目录直读的先例路径。
 
 ## P0（阻断性 bug）—— ✅ 均已在 v0.6.2 修复
 

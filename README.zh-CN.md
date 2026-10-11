@@ -15,7 +15,7 @@
 |---|---|
 | ![search](docs/screenshots/search.png) | ![ask](docs/screenshots/ask.png) |
 | **记忆** | **图谱** |
-| ![memories](docs/screenshots/memories.png) | ![graph](docs/screenshots/graph.png) |
+| ![memories](docs/screenshots/memories-timeline.png) | ![graph](docs/screenshots/graph.png) |
 
 状态视图：![status](docs/screenshots/status.png)
 
@@ -27,7 +27,7 @@
 
 - **搜索**：混合检索，支持条数、只看记忆（`tag=memory`）、路径过滤
 - **问答**：LLM 基于知识库作答，答案带引用来源芯片，可逐条核查
-- **记忆**：关键词检索记忆（按日期分组）+ 快速速记（标题 / 正文 / 标签）
+- **记忆**：**全量时间流**（直读 loci 的 `memories/` 目录，最新在前）+ 关键词检索 + 快速速记（标题 / 正文 / 标签）
 - **图谱**：浏览 loci 知识图谱（loci ≥ 0.6.0 `loci graph build`）：实体芯片带度数角标、SPO 关系行，点选实体即过滤其关系
 - **状态**：连接状态、索引库概况、逐来源 chunk 数
 
@@ -83,6 +83,7 @@ dsh plugin --profile web add github:IvenKooLab/loci-dsh
 | `timeoutMs` | `20000` | 短请求超时（health/stats/search/remember） |
 | `askTimeoutMs` | `180000` | `/ask` 超时（LLM 往返，glm-4.6 实测约 21 秒） |
 | `graphPath` | （关闭） | loci `graph.json` 的绝对路径（默认 `<store>/graph.json`）——填上即开启图谱视图 |
+| `memoriesPath` | （关闭） | loci `memories/` 目录的绝对路径——填上即开启记忆全量时间流 |
 
 ## 开发
 

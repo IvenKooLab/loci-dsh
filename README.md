@@ -18,7 +18,7 @@
 |---|---|
 | ![search](docs/screenshots/search.png) | ![ask](docs/screenshots/ask.png) |
 | **Memories** | **Graph** |
-| ![memories](docs/screenshots/memories.png) | ![graph](docs/screenshots/graph.png) |
+| ![memories](docs/screenshots/memories-timeline.png) | ![graph](docs/screenshots/graph.png) |
 
 Status view: ![status](docs/screenshots/status.png)
 
@@ -30,7 +30,7 @@ Pure UI layer — no Python embedded, no core fork. The plugin's **host half** (
 
 - **Search** — hybrid retrieval with result count, memories-only (`tag=memory`) and path filters
 - **Ask** — LLM answers from your knowledge base with citation chips, optional claim-by-claim verification
-- **Memories** — keyword-driven memory retrieval grouped by day, plus quick capture (title / text / tags)
+- **Memories** — full chronological timeline (reads loci's `memories/` directory directly, newest-first) on top of keyword retrieval, plus quick capture (title / text / tags)
 - **Graph** — browse loci's knowledge graph (loci ≥ 0.6.0 `loci graph build`): entity chips with degree badges, SPO relation rows, click an entity to filter its relations
 - **Status** — connection state, store summary, per-source chunk counts
 
@@ -86,6 +86,7 @@ Launch `dsh web` — the 🧠 **loci memory** tab appears in the bottom workbenc
 | `timeoutMs` | `20000` | Short-request timeout (health/stats/search/remember) |
 | `askTimeoutMs` | `180000` | `/ask` timeout — a full LLM round-trip (~21 s with glm-4.6) |
 | `graphPath` | *(disabled)* | Absolute path to loci's `graph.json` (default `<store>/graph.json`) — enables the Graph view |
+| `memoriesPath` | *(disabled)* | Absolute path to loci's `memories/` directory — enables the full memory timeline |
 
 ## Development
 

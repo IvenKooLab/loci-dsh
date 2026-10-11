@@ -309,6 +309,37 @@
   border-radius: 6px;
 }
 
+.memoryHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.memoryTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dsh-fg-1, #e6e6e6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.memoryTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.memoryTag {
+  font-size: 9px;
+  color: var(--dsh-fg-2, #9a9a9a);
+  background: var(--dsh-bg-3, #2a2a2a);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
 .memoryTime {
   font-size: 10px;
   color: var(--dsh-fg-3, #7a7a7a);

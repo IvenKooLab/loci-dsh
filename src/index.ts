@@ -15,6 +15,7 @@
  */
 import { loadGraph } from './graph.ts'
 import { LociClient, LociError } from './loci-client.ts'
+import { listMemories } from './memories.ts'
 import { parseAskAnswer, parseSearchText, parseStatsText } from './parse.ts'
 import { isTrustedApiRequest } from './trust-fence.ts'
 
@@ -40,6 +41,10 @@ export interface Config {
    * is same-origin with this host process anyway, and graph.json is a
    * human-readable artifact by design. Empty disables the graph view. */
   graphPath: string
+  /** Absolute path to loci's memories directory (loci config `[memories] path`,
+   * default `./memories`). Enables the full memory timeline (directory read,
+   * newest-first). Empty disables it. */
+  memoriesPath: string
 }
 
 export const DEFAULT_CONFIG: Config = {
@@ -48,6 +53,7 @@ export const DEFAULT_CONFIG: Config = {
   timeoutMs: 20_000,
   askTimeoutMs: 180_000,
   graphPath: '',
+  memoriesPath: '',
 }
 
 export function resolveConfig(config?: Partial<Config>): Config {
@@ -57,6 +63,7 @@ export function resolveConfig(config?: Partial<Config>): Config {
     timeoutMs: config?.timeoutMs ?? DEFAULT_CONFIG.timeoutMs,
     askTimeoutMs: config?.askTimeoutMs ?? DEFAULT_CONFIG.askTimeoutMs,
     graphPath: config?.graphPath ?? process.env.LOCI_GRAPH_PATH ?? DEFAULT_CONFIG.graphPath,
+    memoriesPath: config?.memoriesPath ?? process.env.LOCI_MEMORIES_PATH ?? DEFAULT_CONFIG.memoriesPath,
   }
 }
 
@@ -240,6 +247,10 @@ async function dispatch(resolved: Config, client: LociClient, method: string, pa
   if (method === 'graph') {
     const graph = await loadGraph(resolved.graphPath)
     return { available: graph !== null, graph }
+  }
+  if (method === 'memories') {
+    const memories = await listMemories(resolved.memoriesPath)
+    return { available: memories !== null, memories }
   }
   throw new BadRequestError(`unknown loci-dsh API method "${method}"`)
 }
