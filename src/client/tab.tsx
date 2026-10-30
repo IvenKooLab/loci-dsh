@@ -39,6 +39,20 @@ export interface GraphEntity {
   sources: string[]
 }
 
+/** Mirrors loci's `/harness` row. Declared locally on purpose: the client
+ * half must not import the node half's modules. */
+export interface HarnessRow {
+  name: string
+  display: string
+  type: string
+  icon: string
+  files: number
+  chunks: number
+  lastUpdated: string
+  summaryStatus: string
+  missingRoots: number
+}
+
 export interface GraphData {
   version: number
   entities: GraphEntity[]
@@ -98,7 +112,7 @@ const K_OPTIONS = [5, 10, 20, 50]
 
 export function LociTab(props: { readonly visible: boolean }): ReactNode {
   const t = currentLocale()
-  const [view, setView] = useState<'search' | 'ask' | 'memory' | 'graph' | 'status'>('search')
+  const [view, setView] = useState<'search' | 'ask' | 'memory' | 'graph' | 'harness' | 'status'>('search')
   const [ping, setPing] = useState<'checking' | 'up' | 'down' | 'no-token'>('checking')
   const [summary, setSummary] = useState<string>('')
 
@@ -151,6 +165,7 @@ export function LociTab(props: { readonly visible: boolean }): ReactNode {
         {view === 'ask' && <AskView />}
         {view === 'memory' && <MemoryView onSaved={() => void refreshStatus()} />}
         {view === 'graph' && <GraphView />}
+        {view === 'harness' && <HarnessView />}
         {view === 'status' && <StatusView />}
       </div>
     </div>
@@ -486,6 +501,92 @@ function MemoryView(props: { readonly onSaved: () => void }): ReactNode {
       </div>
     </div>
   )
+}
+
+/** Which AI coding tools are installed on this machine, and what each holds. */
+function HarnessView(): ReactNode {
+  const t = currentLocale()
+  const [rows, setRows] = useState<HarnessRow[] | null | undefined>(undefined)
+  const [expanded, setExpanded] = useState<string | null>(null)
+
+  useEffect(() => {
+    void (async () => {
+      const result = await callApi<{ available: boolean; harness: HarnessRow[] }>('harness')
+      setRows(result.ok ? result.harness : null)
+    })()
+  }, [])
+
+  if (rows === undefined) {
+    return <div className={styles.view}><div className={styles.meta}>{t['conn.checking']}</div></div>
+  }
+  if (rows === null) {
+    return <div className={styles.view}><div className={styles.errorBox}>{t['harness.error']}</div></div>
+  }
+  if (rows.length === 0) {
+    return (
+      <div className={styles.view}>
+        <div className={styles.meta}>{t['harness.empty']}</div>
+        <div className={styles.hint}>{t['harness.emptyHint']}</div>
+      </div>
+    )
+  }
+  const totalFiles = rows.reduce((sum, row) => sum + row.files, 0)
+  const totalChunks = rows.reduce((sum, row) => sum + row.chunks, 0)
+  return (
+    <div className={styles.view}>
+      <div className={styles.hint}>{t['harness.hint']}</div>
+      <div className={styles.meta}>
+        {format(t['harness.totals'], { tools: rows.length, files: totalFiles, chunks: totalChunks })}
+      </div>
+      {rows.map(row => (
+        <div key={row.name} className={styles.memoryCard}>
+          <div className={styles.memoryHead}>
+            <span className={styles.memoryTitle}>
+              {/* an icon field that is a filename means loci has a logo file;
+                  this tab cannot serve it, so show the name alone rather than
+                  printing "zcode-logo.png" */}
+              {isImageIcon(row.icon) ? '' : `${row.icon} `}{row.display}
+            </span>
+            <span className={styles.memoryTime}>{row.type}</span>
+          </div>
+          <div className={styles.memoryTags}>
+            <span className={styles.memoryTag}>
+              {format(t['harness.files'], { n: row.files })}
+            </span>
+            <span className={styles.memoryTag}>
+              {format(t['harness.chunks'], { n: row.chunks })}
+            </span>
+            {row.lastUpdated !== '' && (
+              <span className={styles.memoryTag}>{row.lastUpdated}</span>
+            )}
+            {row.missingRoots > 0 && (
+              <span className={styles.memoryTag} title={t['harness.missingRootsHint']}>
+                {format(t['harness.missingRoots'], { n: row.missingRoots })}
+              </span>
+            )}
+          </div>
+          {expanded === row.name && row.summaryStatus !== '' && (
+            <div className={styles.meta}>{format(t['harness.digest'], { status: row.summaryStatus })}</div>
+          )}
+          <div className={styles.formRow}>
+            <button
+              type="button"
+              className={styles.linkButton}
+              onClick={() => setExpanded(expanded === row.name ? null : row.name)}
+            >
+              {expanded === row.name ? t['memory.fold'] : t['harness.detail']}
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function isImageIcon(icon: string): boolean {
+  // a logo filename means the file exists somewhere; the tab cannot serve it,
+  // so fall back to the tool's first letter rather than printing "zcode-logo.png"
+  return /\.(png|svg|jpe?g|gif|webp)$/i.test(icon)
 }
 
 function GraphView(): ReactNode {

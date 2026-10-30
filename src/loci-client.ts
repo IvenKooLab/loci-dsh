@@ -6,6 +6,7 @@
  * maps transport failures onto LociError codes the UI can render directly.
  */
 import type { Config } from './index.ts'
+import { parseHarness, type HarnessRow } from './parse.ts'
 
 export interface SearchArgs {
   query: string
@@ -133,6 +134,16 @@ export class LociClient {
       timeoutMs: this.config.askTimeoutMs,
     })
     return this.unwrapString(data, 'result', '/ask')
+  }
+
+  /** Detected AI coding tools and what their memory dirs hold.
+   *
+   * GET on purpose: on both builds `POST /harness` means "regenerate digests",
+   * while a bare GET returns the stats rows. */
+  async harness(): Promise<HarnessRow[]> {
+    const data = await this.request('/harness')
+    const rows = (data as Record<string, unknown> | undefined)?.harness
+    return Array.isArray(rows) ? parseHarness(rows) : []
   }
 
   async remember(args: RememberArgs): Promise<string> {
