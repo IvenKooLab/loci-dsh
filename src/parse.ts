@@ -132,3 +132,48 @@ export function parseAskAnswer(result: string): ParsedAsk {
   })
   return { body: bodyLines.join('\n').trimEnd(), sources }
 }
+
+/** One row of loci's `/harness` payload (both builds, same shape). */
+export interface HarnessRow {
+  name: string
+  display: string
+  type: string
+  icon: string
+  files: number
+  chunks: number
+  lastUpdated: string
+  summaryStatus: string
+  /** Roots that vanished: configured but not installed on this machine. */
+  missingRoots: number
+}
+
+function asNumber(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0
+}
+
+function asString(value: unknown): string {
+  return typeof value === 'string' ? value : ''
+}
+
+/** Normalise `/harness` rows; unknown fields must not break the panel. */
+export function parseHarness(rows: unknown[]): HarnessRow[] {
+  return rows
+    .filter((row): row is Record<string, unknown> => typeof row === 'object' && row !== null)
+    .map(row => {
+      const summary = row.summary
+      return {
+        name: asString(row.name),
+        display: asString(row.display) || asString(row.name),
+        type: asString(row.type),
+        icon: asString(row.icon),
+        files: asNumber(row.files),
+        chunks: asNumber(row.chunks),
+        lastUpdated: asString(row.last_updated),
+        summaryStatus: typeof summary === 'object' && summary !== null
+          ? asString((summary as Record<string, unknown>).status)
+          : '',
+        missingRoots: asNumber(row.missing_roots),
+      }
+    })
+    .sort((a, b) => a.display.localeCompare(b.display))
+}

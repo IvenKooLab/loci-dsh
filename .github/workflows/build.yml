@@ -20,3 +20,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm build
+      # lib/ is a committed artifact; upload it so a machine that cannot run
+      # rolldown (e.g. macOS codesign restrictions) can still commit the build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lib-build
+          path: lib/
+          if-no-files-found: error

@@ -244,6 +244,10 @@ async function dispatch(resolved: Config, client: LociClient, method: string, pa
     const result = await client.remember({ text, title, tags })
     return { result }
   }
+  if (method === 'harness') {
+    const harness = await client.harness()
+    return { available: harness.length > 0, harness }
+  }
   if (method === 'graph') {
     const graph = await loadGraph(resolved.graphPath)
     return { available: graph !== null, graph }
