@@ -177,3 +177,48 @@ export function parseHarness(rows: unknown[]): HarnessRow[] {
     })
     .sort((a, b) => a.display.localeCompare(b.display))
 }
+
+/** The wikilink graph served by `GET /graph` on both builds. */
+export interface WikiNode {
+  path: string
+  /** Indexed chunk count; 0 for a link target that is not (yet) a real file. */
+  chunks: number
+  /** File stem, the label a note is known by in `[[wikilinks]]`. */
+  name: string
+}
+
+export interface WikiLink {
+  from: string
+  /** Bare target as written in the note — resolved by the UI, not by loci. */
+  to: string
+}
+
+export interface WikiGraph {
+  nodes: WikiNode[]
+  links: WikiLink[]
+}
+
+function stemOf(path: string): string {
+  const base = path.split('/').pop() ?? path
+  return base.replace(/\.md$/i, '')
+}
+
+/** Normalise `/graph`; a malformed row is dropped, never rendered as garbage. */
+export function parseWikiGraph(data: unknown): WikiGraph {
+  const record = (data ?? {}) as Record<string, unknown>
+  const rawNodes = Array.isArray(record.nodes) ? record.nodes : []
+  const rawLinks = Array.isArray(record.links) ? record.links : []
+  const nodes: WikiNode[] = rawNodes
+    .filter((n): n is Record<string, unknown> => typeof n === 'object' && n !== null)
+    .map(n => ({
+      path: asString(n.path),
+      chunks: asNumber(n.chunks),
+      name: stemOf(asString(n.path)),
+    }))
+    .filter(n => n.path !== '')
+  const links: WikiLink[] = rawLinks
+    .filter((l): l is unknown[] => Array.isArray(l) && l.length >= 2)
+    .map(l => ({ from: asString(l[0]), to: asString(l[1]) }))
+    .filter(l => l.from !== '' && l.to !== '')
+  return { nodes, links }
+}

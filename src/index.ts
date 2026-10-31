@@ -248,6 +248,10 @@ async function dispatch(resolved: Config, client: LociClient, method: string, pa
     const harness = await client.harness()
     return { available: harness.length > 0, harness }
   }
+  if (method === 'wikilinks') {
+    const graph = await client.wikilinks()
+    return { available: graph.nodes.length > 0, graph }
+  }
   if (method === 'graph') {
     const graph = await loadGraph(resolved.graphPath)
     return { available: graph !== null, graph }

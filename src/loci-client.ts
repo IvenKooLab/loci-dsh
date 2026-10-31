@@ -6,7 +6,7 @@
  * maps transport failures onto LociError codes the UI can render directly.
  */
 import type { Config } from './index.ts'
-import { parseHarness, type HarnessRow } from './parse.ts'
+import { parseHarness, parseWikiGraph, type HarnessRow, type WikiGraph } from './parse.ts'
 
 export interface SearchArgs {
   query: string
@@ -134,6 +134,15 @@ export class LociClient {
       timeoutMs: this.config.askTimeoutMs,
     })
     return this.unwrapString(data, 'result', '/ask')
+  }
+
+  /** The wikilink graph: `{nodes: [{path, chunks}], links: [[from, to]]}`.
+   *
+   * Cheaper and always available compared with `graph.json`: it is built from
+   * the links the loader already extracts, so it needs no LLM pass. */
+  async wikilinks(): Promise<WikiGraph> {
+    const data = await this.request('/graph')
+    return parseWikiGraph(data)
   }
 
   /** Detected AI coding tools and what their memory dirs hold.

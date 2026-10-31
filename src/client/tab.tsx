@@ -41,6 +41,23 @@ export interface GraphEntity {
 
 /** Mirrors loci's `/harness` row. Declared locally on purpose: the client
  * half must not import the node half's modules. */
+/** Mirrors loci's `/graph` payload; declared locally like the other client types. */
+export interface WikiNode {
+  path: string
+  chunks: number
+  name: string
+}
+
+export interface WikiLink {
+  from: string
+  to: string
+}
+
+export interface WikiGraph {
+  nodes: WikiNode[]
+  links: WikiLink[]
+}
+
 export interface HarnessRow {
   name: string
   display: string
@@ -591,6 +608,173 @@ function isImageIcon(icon: string): boolean {
 
 function GraphView(): ReactNode {
   const t = currentLocale()
+  // Two shapes of "graph" live here, because they answer different questions:
+  // SPO relations come from an LLM pass over the notes (needs `loci graph
+  // build`), while note links come straight from `[[wikilinks]]` and are
+  // always available.
+  const [mode, setMode] = useState<'relations' | 'links'>('links')
+  return (
+    <div className={styles.view}>
+      <div className={styles.tabs} role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'links'}
+          className={`${styles.tabButton} ${mode === 'links' ? styles.tabActive : ''}`}
+          onClick={() => setMode('links')}
+        >
+          {t['graph.mode.links']}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'relations'}
+          className={`${styles.tabButton} ${mode === 'relations' ? styles.tabActive : ''}`}
+          onClick={() => setMode('relations')}
+        >
+          {t['graph.mode.relations']}
+        </button>
+      </div>
+      {mode === 'links' ? <WikiGraphView /> : <RelationGraphView />}
+    </div>
+  )
+}
+
+/** `[[wikilink]]` graph from loci's `/graph` — no LLM, no build step. */
+function WikiGraphView(): ReactNode {
+  const t = currentLocale()
+  const [graph, setGraph] = useState<WikiGraph | null | undefined>(undefined)
+  const [filter, setFilter] = useState('')
+  const [selected, setSelected] = useState<string | null>(null)
+
+  useEffect(() => {
+    void (async () => {
+      const result = await callApi<{ available: boolean; graph: WikiGraph }>('wikilinks')
+      setGraph(result.ok ? result.graph : null)
+    })()
+  }, [])
+
+  if (graph === undefined) {
+    return <div className={styles.meta}>{t['conn.checking']}</div>
+  }
+  if (graph === null) {
+    return <div className={styles.errorBox}>{t['graph.error']}</div>
+  }
+  if (graph.nodes.length === 0) {
+    return (
+      <>
+        <div className={styles.meta}>{t['links.empty']}</div>
+        <div className={styles.hint}>{t['links.emptyHint']}</div>
+      </>
+    )
+  }
+
+  // A link target is written as a bare name; resolve it against note stems the
+  // way Obsidian does. Two notes with the same name stay unresolved (ambiguous
+  // is not a guess) and show up as broken links instead.
+  const byStem = new Map<string, WikiNode | null>()
+  for (const node of graph.nodes) {
+    const key = node.name.toLowerCase()
+    byStem.set(key, byStem.has(key) ? null : node)
+  }
+  const pathOf = new Map(graph.nodes.map(node => [node.path, node]))
+  const degree = new Map<string, { out: number; in: number }>()
+  const bump = (path: string, side: 'out' | 'in'): void => {
+    const entry = degree.get(path) ?? { out: 0, in: 0 }
+    entry[side] += 1
+    degree.set(path, entry)
+  }
+  let broken = 0
+  for (const link of graph.links) {
+    const target = byStem.get(link.to.split('/').pop()?.replace(/\.md$/i, '').toLowerCase() ?? '')
+    if (target === undefined || target === null) { broken += 1; continue }
+    bump(link.from, 'out')
+    bump(target.path, 'in')
+  }
+
+  const needle = filter.trim().toLowerCase()
+  const shown = graph.nodes
+    .filter(node => needle === '' || node.path.toLowerCase().includes(needle))
+    .sort((a, b) => {
+      const da = degree.get(a.path) ?? { out: 0, in: 0 }
+      const db = degree.get(b.path) ?? { out: 0, in: 0 }
+      return (db.out + db.in) - (da.out + da.in) || a.name.localeCompare(b.name)
+    })
+
+  const related = selected !== null
+    ? graph.links.filter(link => {
+      if (link.from === selected) return true
+      const target = byStem.get(link.to.split('/').pop()?.replace(/\.md$/i, '').toLowerCase() ?? '')
+      return target?.path === selected
+    })
+    : []
+
+  return (
+    <>
+      <div className={styles.hint}>{t['links.hint']}</div>
+      <div className={styles.meta}>
+        {format(t['links.stats'], {
+          n: graph.nodes.length,
+          l: graph.links.length,
+          b: broken,
+        })}
+      </div>
+      <div className={styles.formRow}>
+        <input
+          className={styles.input}
+          value={filter}
+          placeholder={t['links.filter']}
+          onChange={event => setFilter(event.target.value)}
+        />
+      </div>
+      {selected !== null && (
+        <div className={styles.formRow}>
+          <span className={styles.graphSelected}>
+            {format(t['links.related'], { name: pathOf.get(selected)?.name ?? selected })}
+          </span>
+          <button type="button" className={styles.linkButton} onClick={() => setSelected(null)}>
+            {t['graph.clearFilter']}
+          </button>
+        </div>
+      )}
+      <div className={styles.sectionTitle}>{t['links.notes']}</div>
+      <div className={styles.graphChips}>
+        {shown.map(node => {
+          const d = degree.get(node.path) ?? { out: 0, in: 0 }
+          return (
+            <button
+              key={node.path}
+              type="button"
+              title={format(t['links.degree'], { out: d.out, in: d.in, c: node.chunks })}
+              className={`${styles.graphChip} ${selected === node.path ? styles.graphChipActive : ''}`}
+              onClick={() => setSelected(selected === node.path ? null : node.path)}
+            >
+              {node.name}
+              <span className={styles.graphChipDegree}>{d.out + d.in}</span>
+            </button>
+          )
+        })}
+      </div>
+      {selected !== null && (
+        <>
+          <div className={styles.sectionTitle}>{t['links.connections']}</div>
+          {related.length === 0 && <div className={styles.meta}>{t['links.isolated']}</div>}
+          {related.map((link, i) => (
+            <div key={`${link.from}-${link.to}-${i}`} className={styles.sourceRow}>
+              <span className={styles.mono}>{pathOf.get(link.from)?.name ?? link.from}</span>
+              <span className={styles.graphPredicate}>→</span>
+              <span className={styles.mono}>{link.to}</span>
+            </div>
+          ))}
+        </>
+      )}
+    </>
+  )
+}
+
+/** SPO relations from `graph.json` (`loci graph build`). */
+function RelationGraphView(): ReactNode {
+  const t = currentLocale()
   const [graph, setGraph] = useState<GraphData | null | undefined>(undefined)
   const [filter, setFilter] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
@@ -602,20 +786,22 @@ function GraphView(): ReactNode {
     })()
   }, [])
 
-  if (graph === undefined) return <div className={styles.view}><div className={styles.meta}>{t['conn.checking']}</div></div>
+  if (graph === undefined) {
+    return <div className={styles.meta}>{t['conn.checking']}</div>
+  }
   if (graph === null) {
     return (
-      <div className={styles.view}>
+      <>
         <div className={styles.meta}>{t['graph.unavailable']}</div>
         <div className={styles.hint}>{t['graph.unavailableHint']}</div>
-      </div>
+      </>
     )
   }
   const needle = filter.trim().toLowerCase()
   const shownEntities = needle === '' ? graph.entities : graph.entities.filter(entity => entity.name.toLowerCase().includes(needle))
   const shownEdges = selected !== null ? graph.edges.filter(edge => edge.s === selected || edge.o === selected) : graph.edges
   return (
-    <div className={styles.view}>
+    <>
       <div className={styles.hint}>{t['graph.hint']}</div>
       <div className={styles.meta}>{format(t['graph.stats'], { e: graph.entities.length, r: graph.edges.length, f: graph.files })}</div>
       {selected !== null && (
@@ -648,7 +834,7 @@ function GraphView(): ReactNode {
         ))}
       </div>
       <div className={styles.sectionTitle}>{t['graph.relations']}</div>
-      <div className={styles.hitList}>
+      <div>
         {shownEdges.map((edge, i) => (
           <div key={`${edge.s}-${edge.p}-${edge.o}-${i}`} className={styles.graphEdge}>
             <button type="button" className={styles.graphTerm} onClick={() => setSelected(edge.s)}>{edge.s}</button>
@@ -657,7 +843,7 @@ function GraphView(): ReactNode {
           </div>
         ))}
       </div>
-    </div>
+    </>
   )
 }
 
