@@ -5,7 +5,14 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { currentLocale, format } from './locale.ts'
+import { renderMd } from './md.ts'
 import styles from './styles.module.css'
+
+/** Rendered markdown block (input is HTML-escaped in renderMd — safe). */
+function Md(props: { readonly text: string }): ReactNode {
+  const html = useMemo(() => renderMd(props.text), [props.text])
+  return <div className={styles.md} dangerouslySetInnerHTML={{ __html: html }} />
+}
 
 export interface SearchHit {
   index: number
@@ -178,12 +185,14 @@ export function LociTab(props: { readonly visible: boolean }): ReactNode {
         ))}
       </div>
       <div className={styles.body}>
-        {view === 'search' && <SearchView />}
-        {view === 'ask' && <AskView />}
-        {view === 'memory' && <MemoryView onSaved={() => void refreshStatus()} />}
-        {view === 'graph' && <GraphView />}
-        {view === 'harness' && <HarnessView />}
-        {view === 'status' && <StatusView />}
+{/* All views stay mounted (display-toggled) so search results, ask
+            history and the capture form survive switching tabs. */}
+        <div style={{ display: view === 'search' ? undefined : 'none' }}><SearchView /></div>
+        <div style={{ display: view === 'ask' ? undefined : 'none' }}><AskView /></div>
+        <div style={{ display: view === 'memory' ? undefined : 'none' }}><MemoryView onSaved={() => void refreshStatus()} /></div>
+        <div style={{ display: view === 'graph' ? undefined : 'none' }}><GraphView /></div>
+        <div style={{ display: view === 'harness' ? undefined : 'none' }}><HarnessView /></div>
+        <div style={{ display: view === 'status' ? undefined : 'none' }}><StatusView /></div>
       </div>
     </div>
   )
